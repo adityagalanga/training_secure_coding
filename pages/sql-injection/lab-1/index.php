@@ -9,14 +9,15 @@ $is_login = false;
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
-   
-    // VULNERABLE CODE - Do not use in production!
-    $query = "SELECT * FROM users WHERE email = '$email' AND password = '" . sha1($password) . "'";
     
+    // Before
+    // $query = "SELECT * FROM users WHERE email = '$email' AND password = '" . sha1($password) . "'";
+    // After
+    $stmt = $pdo->prepare("SELECT id, email, password, role FROM users WHERE email = ? AND password = ? LIMIT 1");
     try {
-        $result = $pdo->query($query);
-        if ($result && $result->rowCount() > 0) {
-            $user = $result->fetch(PDO::FETCH_ASSOC);
+        $stmt->execute([$email,sha1($password)]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($user) {
             $success_message = "Login successful! Welcome, " . $user['email'];
             if ($user['role'] === 'admin') {
                 $success_message .= " (Admin Access Granted)";
