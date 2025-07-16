@@ -3,17 +3,45 @@ $page_title = "Broken Authentication Lab 1 - Weak Password Policy";
 require_once '../../../config/env.php';
 require_once '../../../template/header.php';
 
+$max_attempts = 3;
+$lockout_duration = 10;
 $message = '';
 $attempts = $_SESSION['login_attempts'] ?? 0;
+$first_attempt_time = $_SESSION['first_attempt_time'] ?? 0;
+$lockout_start = $_SESSION['lockout_start'] ?? 0;
+$current_time = time();
+
 $alert_class = "alert-danger";
 $is_login = false;
+$is_locked = false;
+$lockout_time = 0;
+$remaining_time = 0;
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($lockout_start > 0) {
+    $time_since_lockout = $current_time - $lockout_start;
+    
+    if ($time_since_lockout < $lockout_duration) {
+        $is_locked = true;
+        $remaining_time = $lockout_duration - $time_since_lockout;
+        $message = "Account Locked" . gmdate("i:s", $remaining_time) . " (mm:ss)";
+    } else {
+        $_SESSION['login_attempts'] = 0;
+        $_SESSION['first_attempt_time'] = 0;
+        $_SESSION['lockout_start'] = 0;
+        $attempts = 0;
+        $lockout_start = 0;
+    }
+}
+
+if ($first_attempt_time > 0 && ($current_time - $first_attempt_time) > $attempt_window) {
+    $_SESSION['login_attempts'] = 0;
+    $_SESSION['first_attempt_time'] = 0;
+    $attempts = 0;
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$is_locked) {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
-    
-    $_SESSION['login_attempts'] = $attempts + 1;
-
     $query = "SELECT * FROM users WHERE email = '$email' AND password = '" . sha1($password) . "'";
 
     try {
@@ -25,6 +53,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $is_login = true;
         } else {
             $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;
+            $attempts = $_SESSION['login_attempts'];
+
+            $remaining_attempts = $max_attempts - $attempts;
+
+            if ($attempts >= $max_attempts) {
+                $is_locked = true;
+                $_SESSION['lockout_start'] = $current_time;
+            } 
+
             $message = "Invalid credentials. Attempt #" . $_SESSION['login_attempts'];
         }
     } catch (PDOException $e) {
