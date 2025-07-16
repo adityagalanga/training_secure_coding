@@ -5,11 +5,14 @@ require_once '../../../template/header.php';
 
 
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 
 $message = '';
 
+session_start();
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 
 // VULNERABLE CODE - URL Parameter SQL Injection
@@ -25,12 +28,19 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = $_POST['email'] ?? '';
-    $username = $_POST['username'] ?? '';
+    $csrf_token = $_POST['csrf_token'] ?? '';
 
-    $sql =  "UPDATE users SET username = '$username', email = '$email' WHERE id = 3";
-    $pdo->query($sql);
-    $message = "Update profile successful";
+    if (!$csrf_token || $csrf_token !== $_SESSION['csrf_token']) {
+        $message = "CSRF token invalid or missing.";
+    } else {
+        $email = $_POST['email'] ?? '';
+        $username = $_POST['username'] ?? '';
+
+        // NOTE: masih raw SQL injection, tapi fokus kita sekarang ke CSRF
+        $sql =  "UPDATE users SET username = '$username', email = '$email' WHERE id = 3";
+        $pdo->query($sql);
+        $message = "Update profile successful";
+    }
 }
 ?>
 
@@ -73,6 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <?php endif; ?>
 
                                 <form method="post">
+                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                                    
                                     <div class="mb-3">
                                         <label for="name" class="form-label">Username:</label>
                                         <input type="text" class="form-control" id="username" name="username" value="<?php echo htmlspecialchars($user_data['username']); ?>" required>
