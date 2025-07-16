@@ -9,19 +9,23 @@ $attempts = 0;
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
-    
+
     $attempts++;
-    
-    // VULNERABLE - No logging of failed attempts
+
     if ($username === 'admin' && $password === 'admin123') {
         $message = "Login successful!";
-        // No successful login logging
+        log_event($username, 'SUCCESS');
     } else {
         $message = "Invalid credentials.";
-        // No failed login logging
-        // No brute force detection
-        // No alerting system
+        log_event($username, 'FAILED');
     }
+}
+
+function log_event($username, $status) {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN_IP';
+    $time = date("Y-m-d H:i:s");
+    $log = "[$time] IP: $ip | Username: $username | Status: $status\n";
+    file_put_contents(__DIR__ . '/security.log', $log, FILE_APPEND);
 }
 ?>
 
