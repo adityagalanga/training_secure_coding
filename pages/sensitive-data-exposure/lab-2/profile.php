@@ -1,7 +1,7 @@
 <?php
 require_once '../../../config/env.php';
 
-$query = "SELECT * FROM user_profiles WHERE id = 33";
+$query = "SELECT name,bio FROM user_profiles WHERE id = 33";
     
     try {
         $result = $pdo->query($query);
