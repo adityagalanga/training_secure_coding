@@ -12,10 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $redirect = $_POST['redirect'] ?? '';
     
     if ($email === 'admin@example.com' && $password === 'admin') {
-        // VULNERABLE - Unvalidated redirect
         if ($redirect) {
-            header("Location: " . $redirect);
-            exit();
+            $parsed = parse_url($redirect);
+            if (!isset($parsed['host']) && !isset($parsed['scheme']) && str_starts_with($parsed['path'], '/')) {
+                header("Location: " . $parsed['path']);
+                exit();
+            } else {
+                $message = "Invalid redirect URL.";
+            }
         } else {
             $message = "Login successful! No redirect specified.";
         }

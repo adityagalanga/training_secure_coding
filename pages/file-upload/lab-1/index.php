@@ -22,16 +22,24 @@ if (is_dir($upload_dir)) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
     $file = $_FILES['file'];
-    
-    // VULNERABLE - No file type validation
+
+    $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+    $allowed_exts = ['jpg', 'jpeg', 'png', 'gif', 'pdf'];
+    $file_type = mime_content_type($file['tmp_name']);
+    $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
     if ($file['error'] === UPLOAD_ERR_OK) {
-        $filename = $file['name'];
-        $destination = $upload_dir . $filename;
-        
-        if (move_uploaded_file($file['tmp_name'], $destination)) {
-            $message = "File uploaded successfully: " . htmlspecialchars($filename);
+        if (in_array($file_type, $allowed_types) && in_array($file_ext, $allowed_exts)) {
+            $filename = $file['name'];
+            $destination = $upload_dir . $filename;
+
+            if (move_uploaded_file($file['tmp_name'], $destination)) {
+                $message = "File uploaded successfully: " . htmlspecialchars($filename);
+            } else {
+                $message = "Error uploading file.";
+            }
         } else {
-            $message = "Error uploading file.";
+            $message = "Invalid file type. Only images and PDF files are allowed.";
         }
     } else {
         $message = "Upload error: " . $file['error'];

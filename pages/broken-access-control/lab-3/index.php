@@ -12,7 +12,7 @@ try {
             $balance = $result->fetch(PDO::FETCH_ASSOC);
 
             if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                $amount = $_POST['balance'] - $_POST['amount'];
+                $amount = $balance['balance'] - $_POST['amount'];
                 if($amount < 1){
                     $message = "Balance is not enough";
                 } else {

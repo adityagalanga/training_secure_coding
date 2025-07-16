@@ -3,8 +3,9 @@ $page_title = "XSS Lab 2 - Reflected XSS";
 require_once '../../../config/env.php';
 require_once '../../../template/header.php';
 
-$search_term = $_GET['search'] ?? '';
+$search_term = htmlspecialchars($_GET['search']) ?? '';
 $error_message = $_GET['error'] ?? '';
+
 ?>
 
 <div class="container-fluid">

@@ -5,10 +5,18 @@ require_once '../../../template/header.php';
 
 if (isset($_GET['user_id'])) {
     $user_id = $_GET['user_id'];
-
 }
 
-$current_user = $user_id ?? null;
+//temp saja
+$temp_user_id = 1;
+$current_user_id = $_SESSION['user_id'] ?? $temp_user_id;
+
+if($user_id == $current_user_id) {
+    $current_user = $current_user_id;
+}else{
+    $current_user = null;
+}
+
 ?>
 
 <div class="container-fluid">

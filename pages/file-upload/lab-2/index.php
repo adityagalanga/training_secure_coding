@@ -26,13 +26,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
     // VULNERABLE - Weak file type validation
     if ($file['error'] === UPLOAD_ERR_OK) {
         $filename = $file['name'];
-        $file_extension = pathinfo($filename, PATHINFO_EXTENSION);
+        $file_tmp = $file['tmp_name'];
+        $file_size = $file['size'];
+
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
-        
-        // Check MIME type (can be spoofed)
         $allowed_mimes = ['image/jpeg', 'image/png', 'image/gif'];
         
-        if (in_array(strtolower($file_extension), $allowed_extensions) || in_array($file['type'], $allowed_mimes)) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file_tmp);
+        finfo_close($finfo);
+
+        $file_extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        
+        if (@getimagesize($file_tmp) === false) {
+            $message = "File is not a valid image.";
+            return;
+        }
+
+        if (in_array(strtolower($file_extension), $allowed_extensions) || in_array($finfo, $allowed_mimes)) {
             $destination = $upload_dir . $filename;
             
             if (move_uploaded_file($file['tmp_name'], $destination)) {
