@@ -16,8 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $result = $pdo->query($query);
         if ($result && $result->rowCount() > 0) {
             $user = $result->fetch(PDO::FETCH_ASSOC);
-             $_SESSION['user_role'] = $role;
-             $is_login = true;
+            $role = $user['role'];
+            
+            if($role === 'user') {
+                $_SESSION['user_role'] = $role;
+                $is_login = true;
+            } else {
+                $message = "You are not allowed to access this page.";
+                $is_login = false;
+            }
         } else {
             $message = "Invalid credentials";
         }
