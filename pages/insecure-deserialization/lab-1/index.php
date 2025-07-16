@@ -20,9 +20,13 @@ class User
 
     public function __wakeup()
     {
-        // VULNERABLE - Magic method that could be exploited
-        if ($this->role === 'admin') {
-            $message = "Admin access granted through deserialization!";
+        $allowed_roles = ['user'];
+        try {
+            if (!in_array($this->role, $allowed_roles, true)) {
+                throw new InvalidArgumentException("Invalid role: " . $this->role);
+            }
+        } catch (InvalidArgumentException $e) {
+            throw new Exception("Object validation failed: " . $e->getMessage());
         }
     }
 }
@@ -32,8 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($user_data) {
         try {
-            // VULNERABLE - Unsafe deserialization
-            $user = unserialize($user_data);
+            $user = unserialize($user_data, ['allowed_classes' => [User::class]]);
             if ($user instanceof User) {
                 $message = "User object deserialized: " . htmlspecialchars($user->username) . " (Role: " . htmlspecialchars($user->role) . ")";
                 if ($user->role == 'admin') {
